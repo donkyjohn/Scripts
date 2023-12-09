@@ -1,0 +1,74 @@
+#!/bin/bash
+
+matching_directories=($(find / -name "*$1*" -exec dirname {} \; 2>/dev/null))
+original_indices=()
+
+if [ ${#matching_directories[@]} -eq 0 ]; then
+  echo "No matching directories found."
+else
+  if [ ${#matching_directories[@]} -eq 1 ]; then
+    cd "${matching_directories[0]}"
+  else
+    echo "Multiple matching directories found:"
+    for ((i=0; i<${#matching_directories[@]}; i++)); do
+      echo "[$i] ${matching_directories[i]}"
+      original_indices+=("$i")
+    done
+
+    if [ "$i" -ge 2 ]; then
+      while true; do
+        read -p "Enter 'i' for dir, 'p' for pattern search and 'q' to exit: " inner_choice
+        if [ "$inner_choice" == "i" ]; then
+          read -p "Enter the number of the directory you want to go to: " choice
+          if [ "$choice" -ge 0 ] && [ "$choice" -lt ${#matching_directories[@]} ]; then
+            cd "${matching_directories[choice]}"
+            return 0
+          else
+            echo "Invalid choice."
+          fi
+        elif [ "$inner_choice" == "p" ]; then
+          read -p "Enter a pattern to search in directory names: " pattern
+          matching_dirs=()
+          for ((j=0; j<${#matching_directories[@]}; j++)); do
+            if [[ ${matching_directories[j]} =~ $pattern ]]; then
+              matching_dirs+=("${matching_directories[j]}")
+            fi
+          done
+
+          if [ ${#matching_dirs[@]} -eq 0 ]; then
+            echo "Pattern not found in any directory name."
+          else
+            echo "Pattern found in the following directories:"
+            for ((k=0; k<${#matching_dirs[@]}; k++)); do
+              original_index=${original_indices[$k]}
+              echo "[$k] ${matching_dirs[k]}"
+            done
+
+            if [ "$k" -ge 2 ]; then
+              while true; do
+                read -p "Enter 'i' for dir and 'q' to exit: " inner_choice_3
+                if [ "$inner_choice_3" == "i" ]; then
+                  read -p "Enter the number of the directory you want to go to: " another_choice
+                  if [ "$another_choice" -ge 0 ] && [ "$another_choice" -lt ${#matching_dirs[@]} ]; then
+                    cd "${matching_dirs[another_choice]}"
+                    return 0
+                  else
+                    echo "Invalid choice."
+                  fi
+                elif [ "$inner_choice_3" == "q" ]; then
+                  return 0
+                else
+                  echo "Invalid choice."
+                fi
+              done
+            fi
+          fi
+        elif [ "$inner_choice" == "q" ]; then
+          return 0
+        else
+          echo "Invalid choice."
+        fi
+      done
+    fi
+  fi
+fi
